@@ -1,7 +1,19 @@
 import math
 
+import torch
 from torch import nn, optim
 import lightning as L
+
+
+class RMSELoss(nn.Module):
+    def __init__(self, eps=1e-8):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        self.eps = eps
+        
+    def forward(self, predict, label):
+        loss = torch.sqrt(self.mse(predict, label) + self.eps)
+        return loss
 
 
 class CNN(L.LightningModule):
@@ -28,10 +40,9 @@ class CNN(L.LightningModule):
         self.fc = nn.Linear(8 * image_size * image_size, 1)
         self.act = activation_func
 
-        self.loss_func = nn.MSELoss()
+        self.loss_func = RMSELoss()
     
     def forward(self, x):
-        x = x.float()
         x = self.cnn(x)
         x = self.flatten(x)
         x = self.act(self.fc(x))
